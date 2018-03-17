@@ -1,4 +1,7 @@
-package util;
+package http;
+
+import util.HttpRequestUtils;
+import util.IOUtils;
 
 import java.io.*;
 import java.util.HashMap;

@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.util.Map;
 
 import db.DataBase;
+import http.HttpRequest;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,22 +52,19 @@ public class RequestHandler extends Thread {
             }
 
             String url = getDefaultUrl(tokens);
+            HttpRequest request = new HttpRequest(in);
 
             if ("/user/create".equals(url)) {
-                String body = IOUtils.readData(br, contentLength);
-                Map<String, String> params = HttpRequestUtils.parseQueryString(body);
-                User user = new User(params.get("userId"), params.get("password"), params.get("name"),
-                        params.get("email"));
+                User user = new User(request.getPrameter("userId"), request.getPrameter("password"), request.getPrameter("name"),
+                        request.getPrameter("email"));
                 log.debug("user : {}", user);
                 DataBase.addUser(user);
                 DataOutputStream dos = new DataOutputStream(out);
                 response302Header(dos);
             } else if ("/user/login".equals(url)) {
-                String body = IOUtils.readData(br, contentLength);
-                Map<String, String> params = HttpRequestUtils.parseQueryString(body);
-                User user = DataBase.findUserById(params.get("userId"));
+                User user = DataBase.findUserById(request.getPrameter("userId"));
                 if (user != null) {
-                    if (user.login(params.get("password"))) {
+                    if (user.login(request.getPrameter("password"))) {
                         DataOutputStream dos = new DataOutputStream(out);
                         response302LoginSuccessHeader(dos);
                     } else {
