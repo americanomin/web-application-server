@@ -16,12 +16,22 @@ public class HttpRequest {
         method = RequestLine[0];
         String[] UrlToken =  RequestLine[1].split("\\?");
         path = UrlToken[0];
-        params = HttpRequestUtils.parseQueryString(UrlToken[1]);
 
+        int contentLength = 0;
         String line = br.readLine();
         while (line != null && !line.equals("")) {
             header.put(HttpRequestUtils.parseHeader(line).getKey(), HttpRequestUtils.parseHeader(line).getValue());
+            if (line.contains("Content-Length")) {
+                contentLength = getContentLength(line);
+            }
             line = br.readLine();
+        }
+
+        if(method.equals("GET")){
+            params = HttpRequestUtils.parseQueryString(UrlToken[1]);
+        }else if(method.equals("POST")){
+            String body = IOUtils.readData(br, contentLength);
+            params = HttpRequestUtils.parseQueryString(body);
         }
     }
 
@@ -39,5 +49,10 @@ public class HttpRequest {
 
     public String getHeader(String key) {
         return header.get(key);
+    }
+
+    private int getContentLength(String line) {
+        String[] headerTokens = line.split(":");
+        return Integer.parseInt(headerTokens[1].trim());
     }
 }
