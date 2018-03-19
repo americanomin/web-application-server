@@ -11,6 +11,7 @@ import java.util.Map;
 
 public class HttpRequest {
     private static final Logger log = LoggerFactory.getLogger(HttpRequest.class);
+    private RequestLine requestLine;
     private String method;
     private String path;
     private HashMap<String, String> headers = new HashMap<>();
@@ -24,7 +25,7 @@ public class HttpRequest {
                 return;
             }
 
-            processRequestLine(line);
+            requestLine = new RequestLine(line);
 
             line = br.readLine();
 
@@ -36,9 +37,11 @@ public class HttpRequest {
                 line = br.readLine();
             }
 
-            if(method.equals("POST")){
+            if("POST".equals(getMethod())){
                 String body = IOUtils.readData(br, Integer.parseInt(headers.get("Content-Length")));
                 params = HttpRequestUtils.parseQueryString(body);
+            }else{
+                params = requestLine.getParams();
             }
         }catch (IOException io){
             log.error(io.getMessage());
@@ -46,16 +49,14 @@ public class HttpRequest {
     }
 
     public String getMethod() {
-        return method;
+        return requestLine.getMethod();
     }
 
     public String getPrameter(String key) {
         return params.get(key);
     }
 
-    public String getPath() {
-        return path;
-    }
+    public String getPath() { return requestLine.getPath(); }
 
     public String getHeader(String key) {
         return headers.get(key);
@@ -65,24 +66,4 @@ public class HttpRequest {
         String[] headerTokens = line.split(":");
         return Integer.parseInt(headerTokens[1].trim());
     }
-
-    public void processRequestLine(String requestLine) {
-        log.debug("request line : {}", requestLine);
-        String[] tokens = requestLine.split(" ");
-        method = tokens[0];
-
-        if("POST".equals(method)){
-            path = tokens[1];
-            return;
-        }
-
-        int index = tokens[1].indexOf("?");
-
-        if(index == -1){
-            path = tokens[1];
-        }else{
-            path = tokens[1].substring(0, index);
-            params = HttpRequestUtils.parseQueryString(tokens[1].substring(index+1));
-        }
-     }
 }
